@@ -25,6 +25,17 @@ int main(int argc, char* argv[])
     assert_near(bar.nodes[1].N(1), 1, 0.001);
     printf(" ...passed.\n");
 
+    /* testing jacobians */
+    printf("Testing jacobians...");
+    for (double x1 = 0.0; x1 <= 5.0; x1+=0.1)
+        for (double x2 = 5.1; x2 <= 20; x2+=0.1)
+        {
+            bar.nodes[0].x_coord = x1;
+            bar.nodes[1].x_coord = x2;
+            assert(bar.J() > 0);
+        }
+    printf(" ...passed.\n");
+
     /* clean up and exit */
     printf("All tests passed.\n\n");
     return 0;

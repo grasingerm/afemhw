@@ -17,6 +17,10 @@ link_directories(../src)
 
 # dependencies
 add_executable(test_element test_element.cpp ../src/element.cpp ../src/element.h)
+add_executable(test_armadillo test_armadillo.cpp)
+
+link_libraries(test_element armadillo)
+link_libraries(test_armadillo armadillo)
 
 install(TARGETS test_element DESTINATION bin)
 

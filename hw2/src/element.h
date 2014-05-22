@@ -33,7 +33,7 @@ class Element1D
 public:
     virtual ~Element1D() {}
     virtual arma::rowvec N(const double) = 0;
-    virtual arma::rowvec B(const double) = 0;
+    virtual arma::rowvec B() = 0; // TODO: generalize this interface better
     virtual double J() = 0;
 };
 
@@ -45,7 +45,7 @@ public:
     ~Bar2();
     std::array<Node1D, 2> nodes { {Node1D(), Node1D()} };
     arma::rowvec N(const double);
-    arma::rowvec B(const double);
+    arma::rowvec B();
     inline double J()
     {
         return nodes[0].dNdxi * nodes[0].x_coord +

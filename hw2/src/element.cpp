@@ -58,9 +58,6 @@ Bar2::~Bar2() {}
  */
 arma::rowvec Bar2::N(const double xi)
 {
-    /* sanity checks */
-    assert(xi == 1 || xi == -1);
-
     arma::rowvec::fixed<2> N;
     N << nodes[0].N(xi) << nodes[1].N(xi);
     return N;
@@ -72,15 +69,10 @@ arma::rowvec Bar2::N(const double xi)
  * @param xi Parent element xi coordinate
  * @return B matrix
  */
-arma::rowvec Bar2::B(const double xi)
+arma::rowvec Bar2::B()
 {
-    /* sanity checks */
-    assert(xi == 1 || xi == -1);
-
-    double invJ = 1/J();
-
     arma::rowvec::fixed<2> B;
-    B << invJ*nodes[0].dNdxi << invJ*nodes[1].dNdxi;
+    B << nodes[0].dNdxi << nodes[1].dNdxi;
     return B;
 }
 

@@ -13,6 +13,10 @@ set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wextra -g -std=c++11 -pedantic -pedantic-err
 set(CMAKE_BINARY_DIR build)
 set(EXECUTABLE_OUTPUT_PATH bin)
 
+if(UNIX)
+    link_libraries(hw2 m)
+endif(UNIX)
+
 # dependencies
 add_executable(hw2 main.cpp element.cpp)
 

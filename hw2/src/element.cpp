@@ -1,3 +1,4 @@
+//#define ARMA_DONT_USE_WRAPPER // need because the wrapper caused linking errors
 #include <armadillo>
 #include "element.h"
 

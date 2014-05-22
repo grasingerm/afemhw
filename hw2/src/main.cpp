@@ -1,4 +1,5 @@
 #include <iostream>
+//#define ARMA_DONT_USE_WRAPPER // need because the wrapper caused linking errors
 #include <armadillo>
 #include <array>
 #include <forward_list>
@@ -35,9 +36,9 @@ int main(int argc, char* argv[])
     double elem_size, x1, x2, bar_length = x_domain[1] - x_domain[0];
 
     /* solution data */
-    vec u_g, delta_u_g, u_e(2), x(1);
+    vec u_g, delta_u_g, u_e(2), x(1), x_e(2);
     double J;
-    rowvec N(2), x_e(2), B(2), R, R_e(2), dR(1);
+    rowvec N(2), B(2), R, R_e(2), dR(1);
 
     /* iteration data */
     const double eps = 1.e-5;
@@ -85,15 +86,19 @@ int main(int argc, char* argv[])
             R.zeros();
             dR.zeros();
 
+            cout << "... calculating B matrix ...";
             /* **Because elements are 1D-linear, B-matrix will not change.
              * Calculate once. */
             B = elem_list.front().B();
+            cout << " ...calculated." << endl;
 
             for (auto &curr_elem : elem_list)
             {
+                cout << "... calculating Jacobian ...";
                 /* **Only need to calc J once per element** */
                 J = curr_elem.J();
                 assert(J > 0);              // sanity check
+                cout << " ...calculated." << endl;
 
                 u_e(0) = u_g(curr_elem.nodes[0].g_dof);
                 u_e(1) = u_g(curr_elem.nodes[1].g_dof);
@@ -110,19 +115,23 @@ int main(int argc, char* argv[])
                     {
                         N = curr_elem.N(int_pt);
                         x = N * x_e;
-
+                        
+                        cout << "... calculating R_e ...";
                         /* TODO: simplify, a lot of div and mult of J */
                         /* calculate R */
                         R_e += weight *
                                 (   trans(N)/J * (x*x)
                                   - trans(N)/J * (B/J*u_e)
                                   - N/J*u_e * trans(B)/J * B/J*u_e  ) * J;
+                        cout << " ...calculated." << endl;
 
-                        /* calculate dR */
+                        cout << "... calculating dR ...";
+                        /* calculate dR */ /* fix matrix mult */
                         dR += weight *
                                 ( - trans(N)/J * B/J
-                                  - trans(N)/J * B/J * B/J*u_e
+                                  - N/J * trans(B)/J * B/J*u_e
                                   - N/J*u_e * trans(B)/J * B/J      ) * J;
+                        cout << " ...calculated." << endl;
                     }
                 } /* end of integration */
 

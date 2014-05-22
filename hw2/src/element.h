@@ -1,6 +1,7 @@
 #ifndef _ELEMENT_H
 #define _ELEMENT_H 1
 
+//#define ARMA_DONT_USE_WRAPPER // need because the wrapper caused linking errors
 #include <armadillo>
 #include <array>
 

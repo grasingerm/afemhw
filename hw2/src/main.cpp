@@ -36,9 +36,9 @@ int main(int argc, char* argv[])
     double elem_size, x1, x2, bar_length = x_domain[1] - x_domain[0];
 
     /* solution data */
-    vec u_g, delta_u_g, u_e(2), x(1), x_e(2);
+    vec u_g, delta_u_g, u_e(2), x(1), x_e(2), R, R_e(2), dR(1);
     double J;
-    rowvec N(2), B(2), R, R_e(2), dR(1);
+    rowvec N(2), B(2);
 
     /* iteration data */
     const double eps = 1.e-5;
@@ -122,38 +122,47 @@ int main(int argc, char* argv[])
                         R_e += weight *
                                 (   trans(N)/J * (x*x)
                                   - trans(N)/J * (B/J*u_e)
-                                  - N/J*u_e * trans(B)/J * B/J*u_e  ) * J;
+                                  - trans(B)/J * (N/J*u_e) * B/J*u_e  ) * J; // edited here*
                         cout << " ...calculated." << endl;
 
                         cout << "... calculating dR ...";
-                        /* calculate dR */ /* fix matrix mult */
+                        /* calculate dR */ /* fix matrix mult, dR cannot be 0 */
                         dR += weight *
-                                ( - trans(N)/J * B/J
+                                ( - N/J * trans(B)/J
                                   - N/J * trans(B)/J * B/J*u_e
-                                  - N/J*u_e * trans(B)/J * B/J      ) * J;
+                                  - N/J*u_e * B/J * trans(B)/J      ) * J;
                         cout << " ...calculated." << endl;
                     }
                 } /* end of integration */
 
                 /* assemble global R */
-                R(0) += R_e(curr_elem.nodes[0].g_dof);
-                R(1) += R_e(curr_elem.nodes[1].g_dof);
+                cout << "... assemble global R ...";
+                R(curr_elem.nodes[0].g_dof) += R_e(0);
+                R(curr_elem.nodes[1].g_dof) += R_e(1);
+                cout << " ...assembled." << endl;
 
             } /* looped over all elements */
 
             /* update displacements */
-            delta_u_g = -R/dR;
+            cout << "... updating displacements ...";
+            delta_u_g = -R/dR(0); // index dR to force NOT element-wise division
             u_g += delta_u_g;
+            cout << " ...updated." << endl;
+            cout << "R = " << endl << R << endl;
+            cout << "dR = " << endl << dR << endl;
+            cout << "delta_u_g = " << endl << delta_u_g << endl;
 
             /* check error */
-            /* TODO: use armadillo "norm" function, solve linking errors? */
+            cout << "... calculate error ...";
             R_norm = norm(R, 2);
             rel_error = R_norm/prev_norm;
             prev_norm = R_norm;
+            cout << " ...calculated." << endl;
+            cout << "R_norm = " << R_norm <<endl;
 
             /* update user with iteration details */
             cout << "iteration " << iteration << ", rel_error " << rel_error
-                 << endl << "u_g = " << u_g << endl;
+                 << endl << "u_g = " << endl << u_g << endl;
 
         } /* NR solution loop */
     }

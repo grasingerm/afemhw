@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
     const array<double, 1> weights { {2.0} };
     const array<double, 1> int_pts { {0.0} };
 
-    for (elem_size = 0.5; elem_size >= 0.5; elem_size /= 2)
+    for (elem_size = 1.0; elem_size >= 1.0; elem_size /= 2)
     {
         num_elem = ceil(bar_length / elem_size);
         cout << "Element size: " << elem_size << " | Number of elements: "
@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
                         /* TODO: encapsulate "equation" in an object/lambda */
                         R_e += weight * 
                             (   trans(N) * (x*x)                   // n x 1
-                              - trans(N) * du_dx * du_x            // n x 1
+                              - trans(N) * du_dx * du_dx           // n x 1
                               - trans(B) * u * du_dx     ) * J;    // n x 1
                                 
                         cout << " ...calculated." << endl;
@@ -142,14 +142,18 @@ int main(int argc, char* argv[])
                         cout << "... calculating dR ...";
                         /* calculate dR */ /* fix matrix mult, dR cannot be 0 */
                         dR_e += weight *
-                                ( - 2 * trans(N) * B * du_dx           // n x n
-                                  - 2 * trans(B) * N * du_dx  ) * J;   // n x n
+                                ( - 2 * trans(N) * B * du_dx(0)         // n x n
+                                  - 2 * trans(B) * N * du_dx(0)  ) * J; // n x n
                         cout << " ...calculated." << endl;
                     }
                 } /* end of integration */
 
                 /* assemble global R */
                 cout << "... assemble global R and dR ...";
+                cout << "dR" << endl << dR << endl;
+                cout << "R" << endl << R << endl;
+                cout << "dR_e" << endl << dR_e << endl;
+                cout << "R_e" << endl << R_e << endl;
                 for (int i = 0; i < dof_per_elem; i++)
                 {
                     R(curr_elem.nodes[i].g_dof) += R_e(i);
@@ -157,13 +161,15 @@ int main(int argc, char* argv[])
                         dR(curr_elem.nodes[i].g_dof, curr_elem.nodes[j].g_dof)
                             += dR_e(i, j);
                 }
+                cout << "dR" << endl << dR << endl;
+                cout << "R" << endl << R << endl;
                 cout << " ...assembled." << endl;
 
             } /* looped over all elements */
 
             /* update displacements */
             cout << "... updating displacements ...";
-            delta_u_g = inv(dR) * -R; // index dR to force NOT element-wise division
+            delta_u_g = inv(dR) * -R;
             u_g += delta_u_g;
             cout << " ...updated." << endl;
             cout << "R = " << endl << R << endl;

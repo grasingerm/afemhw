@@ -30,13 +30,16 @@ int main(int argc, char* argv[])
     cout << "Maximum iterations: " << max_iterations << endl;
 
     /* Newton-Raphson */
+    /* TODO: encapsulate NR logic in an object */
 
     /* mesh data */
-    int g_dof, num_elem, total_dof;
+    int g_dof, num_elem, total_dof, dof_per_elem;
     double elem_size, x1, x2, bar_length = x_domain[1] - x_domain[0];
 
     /* solution data */
-    vec u_g, delta_u_g, u_e(2), x(1), x_e(2), R, R_e(2), dR(1);
+    mat dR, dR_e(2, 2);     // TODO: fix these heuristics, define dof_per_elem
+    vec u_g, delta_u_g, u_e(2), x_e(2), R, R_e(2);
+    vec x(1), u(1), du_dx(1);
     double J;
     rowvec N(2), B(2);
 
@@ -67,7 +70,10 @@ int main(int argc, char* argv[])
             x2 = (x1 + elem_size > x_domain[1]) ? x_domain[1] : x1 + elem_size;
             elem_list.emplace_front(x1, x2, g_dof, g_dof+1);
         }
-        total_dof = num_elem * elem_list.front().nodes.size();
+        dof_per_elem = elem_list.front().nodes.size();
+        
+        // subtract shared nodes then add an end node
+        total_dof = num_elem * (dof_per_elem - 1) + 1;
 
         cout << "Total dof: " << total_dof << endl;
 
@@ -75,12 +81,13 @@ int main(int argc, char* argv[])
         u_g.set_size(total_dof);
         delta_u_g.set_size(total_dof);
         R.set_size(total_dof);
+        dR.set_size(total_dof, total_dof);
 
         /* enforce EBCs, once before iteration */
         u_g(0) = 0;
         u_g(total_dof-1) = 0.5;
 
-        /* Integrate, assmeble, NR */
+        /* Integrate, assmeble, NR */ /* TODO: primary function of NR object */
         while ( rel_error > eps && (iteration++) < max_iterations)
         {
             R.zeros();
@@ -106,46 +113,57 @@ int main(int argc, char* argv[])
                 /* col vector of element x coordinates */
                 x_e(0) = curr_elem.nodes[0].x_coord;
                 x_e(1) = curr_elem.nodes[1].x_coord;
-
+                
+                /* zero element solution vars */
                 R_e.zeros();
+                dR_e.zeros();
+                
                 /* TODO: encapsulate integration in an object */
                 for (auto weight : weights)
                 {
                     for (auto int_pt : int_pts)
                     {
+                        /* cache repeated linear algebra */
                         N = curr_elem.N(int_pt);
                         x = N * x_e;
+                        u = N * u_e;
+                        du_dx = B * u_e; // B has been previously calculated
                         
                         cout << "... calculating R_e ...";
-                        /* TODO: simplify, a lot of div and mult of J */
                         /* calculate R */
-                        R_e += weight *
-                                (   trans(N)/J * (x*x)
-                                  - trans(N)/J * (B/J*u_e)
-                                  - trans(B)/J * (N/J*u_e) * B/J*u_e  ) * J; // edited here*
+                        /* TODO: encapsulate "equation" in an object/lambda */
+                        R_e += weight * 
+                            (   trans(N) * (x*x)                   // n x 1
+                              - trans(N) * du_dx * du_x            // n x 1
+                              - trans(B) * u * du_dx     ) * J;    // n x 1
+                                
                         cout << " ...calculated." << endl;
 
                         cout << "... calculating dR ...";
                         /* calculate dR */ /* fix matrix mult, dR cannot be 0 */
-                        dR += weight *
-                                ( - N/J * trans(B)/J
-                                  - N/J * trans(B)/J * B/J*u_e
-                                  - N/J*u_e * B/J * trans(B)/J      ) * J;
+                        dR_e += weight *
+                                ( - 2 * trans(N) * B * du_dx           // n x n
+                                  - 2 * trans(B) * N * du_dx  ) * J;   // n x n
                         cout << " ...calculated." << endl;
                     }
                 } /* end of integration */
 
                 /* assemble global R */
-                cout << "... assemble global R ...";
-                R(curr_elem.nodes[0].g_dof) += R_e(0);
-                R(curr_elem.nodes[1].g_dof) += R_e(1);
+                cout << "... assemble global R and dR ...";
+                for (int i = 0; i < dof_per_elem; i++)
+                {
+                    R(curr_elem.nodes[i].g_dof) += R_e(i);
+                    for (int j = 0; j < dof_per_elem; j++)
+                        dR(curr_elem.nodes[i].g_dof, curr_elem.nodes[j].g_dof)
+                            += dR_e(i, j);
+                }
                 cout << " ...assembled." << endl;
 
             } /* looped over all elements */
 
             /* update displacements */
             cout << "... updating displacements ...";
-            delta_u_g = -R/dR(0); // index dR to force NOT element-wise division
+            delta_u_g = inv(dR) * -R; // index dR to force NOT element-wise division
             u_g += delta_u_g;
             cout << " ...updated." << endl;
             cout << "R = " << endl << R << endl;

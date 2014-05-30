@@ -74,6 +74,6 @@ arma::rowvec Bar2::B()
 {
     arma::rowvec::fixed<2> B;
     B << nodes[0].dNdxi << nodes[1].dNdxi;
-    return B;
+    return B/J();
 }
 

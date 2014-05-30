@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
          << ")=" << u__1 << endl;
     cout << endl;
 
-    const int max_iterations = 1000;
+    const int max_iterations = 100;
     cout << "Maximum iterations: " << max_iterations << endl;
 
     /* Newton-Raphson */
@@ -45,8 +45,8 @@ int main(int argc, char* argv[])
 
     /* iteration data */
     const double eps = 1.e-5;
-    double rel_error = 1.e9;
-    int iteration = 0;
+    double rel_error;
+    int iteration;
     double prev_norm = eps;
     double R_norm;
 
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
     const array<double, 1> weights { {2.0} };
     const array<double, 1> int_pts { {0.0} };
 
-    for (elem_size = 1.0; elem_size >= 1.0; elem_size /= 2)
+    for (elem_size = 1.0; elem_size >= 0.125; elem_size /= 2)
     {
         num_elem = ceil(bar_length / elem_size);
         cout << "Element size: " << elem_size << " | Number of elements: "
@@ -87,9 +87,16 @@ int main(int argc, char* argv[])
         u_g(0) = 0;
         u_g(total_dof-1) = 0.5;
 
+        /* reset iteration data */
+        rel_error = 1e9;
+        iteration = 0;
+        
         /* Integrate, assmeble, NR */ /* TODO: primary function of NR object */
         while ( rel_error > eps && (iteration++) < max_iterations)
         {
+            /* init iteration */
+            iteration++;
+            
             R.zeros();
             dR.zeros();
 
@@ -129,6 +136,16 @@ int main(int argc, char* argv[])
                         u = N * u_e;
                         du_dx = B * u_e; // B has been previously calculated
                         
+                        /* debugging information
+                        cout << "N" << endl << N << endl;
+                        cout << "B" << endl << B << endl;
+                        cout << "x" << endl << x_e << endl;
+                        cout << "u" << endl << u_e << endl;
+                        cout << "Nu" << endl << u << endl;
+                        cout << "Bu" << endl << x << endl;
+                        cout << "J" << endl << J << endl;
+                        */
+                        
                         cout << "... calculating R_e ...";
                         /* calculate R */
                         /* TODO: encapsulate "equation" in an object/lambda */
@@ -142,18 +159,21 @@ int main(int argc, char* argv[])
                         cout << "... calculating dR ...";
                         /* calculate dR */ /* fix matrix mult, dR cannot be 0 */
                         dR_e += weight *
-                                ( - 2 * trans(N) * B * du_dx(0)         // n x n
-                                  - 2 * trans(B) * N * du_dx(0)  ) * J; // n x n
+                                ( - 2 * trans(N) * B * du_dx(0)        // n x n
+                                  - trans(B) * N * du_dx(0)            // n x n
+                                  - trans(B) * B * u(0)         ) * J; // n x n
                         cout << " ...calculated." << endl;
                     }
                 } /* end of integration */
 
                 /* assemble global R */
                 cout << "... assemble global R and dR ...";
+                /* debugging information
                 cout << "dR" << endl << dR << endl;
                 cout << "R" << endl << R << endl;
                 cout << "dR_e" << endl << dR_e << endl;
                 cout << "R_e" << endl << R_e << endl;
+                */
                 for (int i = 0; i < dof_per_elem; i++)
                 {
                     R(curr_elem.nodes[i].g_dof) += R_e(i);
@@ -161,15 +181,18 @@ int main(int argc, char* argv[])
                         dR(curr_elem.nodes[i].g_dof, curr_elem.nodes[j].g_dof)
                             += dR_e(i, j);
                 }
+                /* debugging information
                 cout << "dR" << endl << dR << endl;
                 cout << "R" << endl << R << endl;
                 cout << " ...assembled." << endl;
+                */
 
             } /* looped over all elements */
 
             /* update displacements */
             cout << "... updating displacements ...";
-            delta_u_g = inv(dR) * -R;
+            arma::solve(delta_u_g, dR, -R);     // solve is faster for square
+            //delta_u_g = inv(dR) * -R;
             u_g += delta_u_g;
             cout << " ...updated." << endl;
             cout << "R = " << endl << R << endl;

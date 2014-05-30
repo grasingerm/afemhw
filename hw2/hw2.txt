@@ -1,0 +1,145 @@
+Problem definition...
+PDE: u * d^2u / dx^2 + x^2 = 0
+Domain: (0, 1)
+EBCs: u(0)=0, u(1)=0.5
+
+Maximum iterations: 1000
+
+NEW MESH
+-------------------------------
+Element size: 1 | Number of elements: 1
+Total dof: 2
+iteration 1, rel_error 17677.7
+iteration 2, rel_error 0
+
+SOLUTION CONVERGED, iterations 2
+u_g = 
+  -0.2500
+   0.2500
+
+u_m_norm = 1e+09, u_n_norm = 0.25
+norm(u_m - u_n) = 1e+09
+
+NEW MESH
+-------------------------------
+Element size: 0.5 | Number of elements: 2
+Total dof: 3
+iteration 1, rel_error inf
+iteration 2, rel_error 0.51559
+iteration 3, rel_error 0.0875162
+iteration 4, rel_error 0.0106648
+iteration 5, rel_error 0.000116199
+iteration 6, rel_error 2.25096e-08
+
+SOLUTION CONVERGED, iterations 6
+u_g = 
+  -0.0212
+   0.3472
+   0.4905
+
+u_m_norm = 0.25, u_n_norm = 0.34717
+norm(u_m - u_n) = 0.0971702
+
+NEW MESH
+-------------------------------
+Element size: 0.25 | Number of elements: 4
+Total dof: 5
+iteration 1, rel_error 6.28805e+15
+iteration 2, rel_error 0.234236
+iteration 3, rel_error 0.191738
+iteration 4, rel_error 0.0904317
+iteration 5, rel_error 0.0147262
+iteration 6, rel_error 0.000295669
+iteration 7, rel_error 9.50773e-08
+
+SOLUTION CONVERGED, iterations 7
+u_g = 
+  -0.0061
+   0.0734
+   0.0863
+  -0.0932
+   0.1149
+
+u_m_norm = 0.34717, u_n_norm = 0.0833816
+norm(u_m - u_n) = 0.263789
+
+NEW MESH
+-------------------------------
+Element size: 0.125 | Number of elements: 8
+Total dof: 9
+
+error: solve(): solution not found
+
+iteration 1, rel_error 7.81479e+14
+iteration 2, rel_error 55.43
+iteration 3, rel_error 0.249794
+iteration 4, rel_error 0.249182
+iteration 5, rel_error 0.246803
+iteration 6, rel_error 0.238182
+iteration 7, rel_error 0.211563
+iteration 8, rel_error 0.141779
+iteration 9, rel_error 0.0415354
+iteration 10, rel_error 0.0244707
+iteration 11, rel_error 0.0082254
+iteration 12, rel_error 7.02872e-05
+iteration 13, rel_error 2.57934e-06
+
+SOLUTION CONVERGED, iterations 13
+u_g = 
+   0.0113
+   0.0085
+  -0.0299
+  -0.0336
+   0.0299
+  -0.0396
+   0.0469
+  -0.0553
+   0.0597
+
+u_m_norm = 0.0833816, u_n_norm = 0.0387355
+norm(u_m - u_n) = 0.0446461
+
+NEW MESH
+-------------------------------
+Element size: 0.0625 | Number of elements: 16
+Total dof: 17
+
+error: solve(): solution not found
+
+iteration 1, rel_error 5.14049e+18
+iteration 2, rel_error 1.73787
+iteration 3, rel_error 0.249952
+iteration 4, rel_error 0.249806
+iteration 5, rel_error 0.249211
+iteration 6, rel_error 0.246935
+iteration 7, rel_error 0.239102
+iteration 8, rel_error 0.222899
+iteration 9, rel_error 0.218119
+iteration 10, rel_error 0.188779
+iteration 11, rel_error 0.0927977
+iteration 12, rel_error 0.0149423
+iteration 13, rel_error 0.000533347
+iteration 14, rel_error 5.72128e-07
+
+SOLUTION CONVERGED, iterations 14
+u_g = 
+  -0.0003
+   0.0065
+   0.0104
+   0.0079
+  -0.0123
+  -0.0123
+   0.0191
+   0.0214
+  -0.0113
+   0.0424
+   0.0668
+   0.0684
+   0.0429
+  -0.0338
+  -0.0340
+   0.0537
+   0.0774
+
+u_m_norm = 0.0387355, u_n_norm = 0.0386691
+norm(u_m - u_n) = 6.64473e-05

@@ -8,6 +8,8 @@
 
 #include <cassert>
 
+#define HRULE "-------------------------------"
+
 using namespace std;
 using namespace arma;
 
@@ -26,7 +28,7 @@ int main(int argc, char* argv[])
          << ")=" << u__1 << endl;
     cout << endl;
 
-    const int max_iterations = 100;
+    const int max_iterations = 1000;
     cout << "Maximum iterations: " << max_iterations << endl;
 
     /* Newton-Raphson */
@@ -49,14 +51,16 @@ int main(int argc, char* argv[])
     int iteration;
     double prev_norm = eps;
     double R_norm;
+    double u_m_norm = 1.e9, u_n_norm;
 
     /* integration data */
     const array<double, 1> weights { {2.0} };
     const array<double, 1> int_pts { {0.0} };
 
-    for (elem_size = 1.0; elem_size >= 0.125; elem_size /= 2)
+    for (elem_size = 1.0; elem_size >= 0.0625; elem_size /= 2)
     {
         num_elem = ceil(bar_length / elem_size);
+        cout << endl << "NEW MESH" << endl << HRULE << endl;
         cout << "Element size: " << elem_size << " | Number of elements: "
              << num_elem << endl;
 
@@ -95,24 +99,18 @@ int main(int argc, char* argv[])
         while ( rel_error > eps && (iteration++) < max_iterations)
         {
             /* init iteration */
-            iteration++;
-            
             R.zeros();
             dR.zeros();
 
-            cout << "... calculating B matrix ...";
             /* **Because elements are 1D-linear, B-matrix will not change.
              * Calculate once. */
             B = elem_list.front().B();
-            cout << " ...calculated." << endl;
 
             for (auto &curr_elem : elem_list)
             {
-                cout << "... calculating Jacobian ...";
                 /* **Only need to calc J once per element** */
                 J = curr_elem.J();
                 assert(J > 0);              // sanity check
-                cout << " ...calculated." << endl;
 
                 u_e(0) = u_g(curr_elem.nodes[0].g_dof);
                 u_e(1) = u_g(curr_elem.nodes[1].g_dof);
@@ -136,44 +134,22 @@ int main(int argc, char* argv[])
                         u = N * u_e;
                         du_dx = B * u_e; // B has been previously calculated
                         
-                        /* debugging information
-                        cout << "N" << endl << N << endl;
-                        cout << "B" << endl << B << endl;
-                        cout << "x" << endl << x_e << endl;
-                        cout << "u" << endl << u_e << endl;
-                        cout << "Nu" << endl << u << endl;
-                        cout << "Bu" << endl << x << endl;
-                        cout << "J" << endl << J << endl;
-                        */
-                        
-                        cout << "... calculating R_e ...";
                         /* calculate R */
                         /* TODO: encapsulate "equation" in an object/lambda */
                         R_e += weight * 
                             (   trans(N) * (x*x)                   // n x 1
                               - trans(N) * du_dx * du_dx           // n x 1
                               - trans(B) * u * du_dx     ) * J;    // n x 1
-                                
-                        cout << " ...calculated." << endl;
-
-                        cout << "... calculating dR ...";
+                        
                         /* calculate dR */ /* fix matrix mult, dR cannot be 0 */
                         dR_e += weight *
                                 ( - 2 * trans(N) * B * du_dx(0)        // n x n
                                   - trans(B) * N * du_dx(0)            // n x n
                                   - trans(B) * B * u(0)         ) * J; // n x n
-                        cout << " ...calculated." << endl;
                     }
                 } /* end of integration */
 
                 /* assemble global R */
-                cout << "... assemble global R and dR ...";
-                /* debugging information
-                cout << "dR" << endl << dR << endl;
-                cout << "R" << endl << R << endl;
-                cout << "dR_e" << endl << dR_e << endl;
-                cout << "R_e" << endl << R_e << endl;
-                */
                 for (int i = 0; i < dof_per_elem; i++)
                 {
                     R(curr_elem.nodes[i].g_dof) += R_e(i);
@@ -181,37 +157,47 @@ int main(int argc, char* argv[])
                         dR(curr_elem.nodes[i].g_dof, curr_elem.nodes[j].g_dof)
                             += dR_e(i, j);
                 }
-                /* debugging information
-                cout << "dR" << endl << dR << endl;
-                cout << "R" << endl << R << endl;
-                cout << " ...assembled." << endl;
-                */
 
             } /* looped over all elements */
 
             /* update displacements */
-            cout << "... updating displacements ...";
-            arma::solve(delta_u_g, dR, -R);     // solve is faster for square
+            if (!arma::solve(delta_u_g, dR, -R))   // solve is faster for square
+            {
+                //dR is singular, set delta_u_g to random
+                //use different strategy based on iteration number
+                if (iteration % 2)
+                    delta_u_g.randn(total_dof);     // Gaussian distribution
+                else
+                    delta_u_g.randu(total_dof);     // uniform distribution
+            }
             //delta_u_g = inv(dR) * -R;
             u_g += delta_u_g;
-            cout << " ...updated." << endl;
-            cout << "R = " << endl << R << endl;
-            cout << "dR = " << endl << dR << endl;
-            cout << "delta_u_g = " << endl << delta_u_g << endl;
 
             /* check error */
-            cout << "... calculate error ...";
             R_norm = norm(R, 2);
             rel_error = R_norm/prev_norm;
             prev_norm = R_norm;
-            cout << " ...calculated." << endl;
-            cout << "R_norm = " << R_norm <<endl;
 
             /* update user with iteration details */
             cout << "iteration " << iteration << ", rel_error " << rel_error
-                 << endl << "u_g = " << endl << u_g << endl;
+                 << endl;
 
         } /* NR solution loop */
+        
+        /* integrate u^2dx */
+        u_n_norm = 0;
+        for (int i = 0; i < total_dof; i++)
+            u_n_norm += u_g(i)*u_g(i) * bar_length/total_dof;
+        u_n_norm = sqrt(u_n_norm);
+        
+        /* display solution information */
+        cout << endl << "SOLUTION CONVERGED, iterations " << iteration << endl;
+        cout << "u_g = " << endl << u_g << endl;
+        cout << "u_m_norm = " << u_m_norm 
+             << ", u_n_norm = " << u_n_norm << endl;
+        cout << "norm(u_m - u_n) = " << abs(u_m_norm - u_n_norm) << endl;
+        
+        u_m_norm = u_n_norm;
     }
 
     /* clean up and exit */

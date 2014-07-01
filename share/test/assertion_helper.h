@@ -1,6 +1,8 @@
 #ifndef ASSERTION_HELPER
 #define ASSERTION_HELPER 1
 
+#include <cstdlib>
+
 #define ASSERT_NEAR(act, approx, tol) \
     if (!act) \
         assert(!approx || abs(approx) < tol); \

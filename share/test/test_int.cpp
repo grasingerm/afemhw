@@ -2,8 +2,10 @@
 #include "assertion_helper.h"
 #include <iostream>
 #include <cassert>
+#include <cmath>
 
 using namespace std;
+using namespace gquad;
 
 int main()
 {
@@ -12,8 +14,8 @@ int main()
     auto f3 = [](const double x) -> double { return x; };
     auto f4 = [](const double x, const double y) -> double { return x*x + y; };
     
-    GaussQuad1D<double> Int1D();
-    GaussQuad2D<double> Int2D();
+    GaussQuad1D<double> Int1D;
+    GaussQuad2D<double> Int2D;
     
     ASSERT_NEAR(2.0/3.0, Int1D.integrate(f1, 2), 1e-5);
     ASSERT_NEAR(10.0, Int1D.integrate(f2, 1), 1e-5);

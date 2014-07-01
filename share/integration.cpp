@@ -3,6 +3,37 @@
 
 using namespace std;
 
+namespace gquad
+{
+    /* set up integration points and weights */
+    static double int_pts_1[] = { 0.0 };
+    static double weights_1[] = { 2.0 };
+    static double int_pts_2[] = 
+        { -0.5773502691896257, 0.5773502691896257 };
+    static double weights_2[] = { 1.0, 1.0 };
+    static double int_pts_3[] =
+        { 0.0, -0.7745966692414834, 0.7745966692414834 };
+    static double weights_3[] = 
+        { 0.8888888888888888, 0.5555555555555556, 0.5555555555555556 };
+    static double int_pts_4[] =
+        { -0.3399810435848563, 0.3399810435848563, -0.8611363115940526, 
+            0.8611363115940526 };
+    static double weights_4[] =
+        { 0.6521451548625461, 0.6521451548625461, 0.3478548451374538,
+            0.3478548451374538 };
+    static double int_pts_5[] =
+        { 0.0, -0.5384693101056831, 0.5384693101056831, -0.9061798459386640,
+            0.9061798459386640 };
+    static double weights_5[] =
+        { 0.5688888888888889, 0.4786286704993665, 0.4786286704993665,
+            0.2369268850561891, 0.2369268850561891 };
+            
+    static double *int_pts[] = { int_pts_1, int_pts_2, int_pts_3,
+        int_pts_4, int_pts_5 };
+    static double *weights[] = { weights_1, weights_2, weights_3,
+        weights_4, weights_5 };
+}
+
 /**
  * Gaussian quadrature in 1D
  *
@@ -10,15 +41,15 @@ using namespace std;
  * @param num_pts Number of points in one direction
  * @return Function integrated
  */
-template <class T> gquad::GaussQuad1D
+template <class T> T gquad::GaussQuad1D<T>
     ::integrate(function<T(const double)> f, const unsigned int num_pts)
 {
-    array *int_pts = gquad::int_pts[num_pts];
-    array *weights = gquad::weights[num_pts];
+    double *int_pts = gquad::int_pts[num_pts];
+    double *weights = gquad::weights[num_pts];
     
-    T sum = *weights[0] * f(*int_pts[0]);
+    T sum = *weights * f(*int_pts);
     for (unsigned int i = 1; i < num_pts; i++)
-        sum += *weights[i] * f(*int_pts[i]);
+        sum += *(weights+i) * f(*(int_pts+i));
     
     return sum;
 }
@@ -30,17 +61,17 @@ template <class T> gquad::GaussQuad1D
  * @param num_pts Number of points in one direction
  * @return Function integrated
  */
-template <class T> gquad::GaussQuad2D
+template <class T> T gquad::GaussQuad2D<T>
     ::integrate(function<T(const double, const double)> f, 
         const unsigned int num_pts)
 {
-    array *int_pts = gquad::int_pts[num_pts];
-    array *weights = gquad::weights[num_pts];
+    double *int_pts = gquad::int_pts[num_pts];
+    double *weights = gquad::weights[num_pts];
     
-    T sum = *weights[0] * *weights[0] * f(*int_pts[0], *int_pts[0]);
+    T sum = *weights * *weights * f(*int_pts, *int_pts);
     for (unsigned int i = 1; i < num_pts; i++)
         for (unsigned int j = 0; j < num_pts; j++)
-            sum += *weights[i] * *weights[j] * f(*int_pts[i], *int_pts[j]);
+            sum += *(weights+i) * *(weights+j) * f(*(int_pts+i), *(int_pts+j));
     
     return sum;
 }
@@ -52,20 +83,20 @@ template <class T> gquad::GaussQuad2D
  * @param num_pts Number of points in one direction
  * @return Function integrated
  */
-template <class T> gquad::GaussQuad3D
+template <class T> T gquad::GaussQuad3D<T>
     ::integrate(function<T(const double, const double, const double)> f, 
         const unsigned int num_pts)
 {
-    array *int_pts = gquad::int_pts[num_pts];
-    array *weights = gquad::weights[num_pts];
+    double *int_pts = gquad::int_pts[num_pts];
+    double *weights = gquad::weights[num_pts];
     
-    T sum = *weights[0] * *weights[0] * *weights[0] * 
-        f(*int_pts[0], *int_pts[0], *int_pts[0]);
+    T sum = *weights * *weights * *weights * 
+        f(*int_pts, *int_pts, *int_pts);
     for (unsigned int i = 1; i < num_pts; i++)
         for (unsigned int j = 0; j < num_pts; j++)
             for (unsigned int k = 0; k < num_pts; k++)
-                sum += *weights[i] * *weights[j] * *weights[k] *
-                    f(*int_pts[i], *int_pts[j], *int_pts[k]);
+                sum += *(weights+i) * *(weights+j) * *(weights+k) *
+                    f(*(int_pts+i), *(int_pts+j), *(int_pts+k));
     
     return sum;
 }

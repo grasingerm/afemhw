@@ -1,10 +1,10 @@
-//#define ARMA_DONT_USE_WRAPPER // need because the wrapper caused linking errors
 #include <armadillo>
 #include "integration.h"
 
-GaussQuad1D::integrate(Element1D &elem, double (*func)(const Element1D &elem))
+GaussQuad1DLinear::integrate(Element1D &elem, double (*func)(const Element1D&,
+    const double))
 {
     arma::colvec u(elem.nodes.size());
-    for (auto node : elem.nodes)
+    return weight * func(elem, x);
 }
 

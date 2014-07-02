@@ -53,12 +53,19 @@ namespace gquad
     static double weights_5[] =
         { 0.5688888888888889, 0.4786286704993665, 0.4786286704993665,
             0.2369268850561891, 0.2369268850561891 };
+    static double int_pts_6[] = { 0.6612093864662645, -0.6612093864662645,
+        -0.2386191860831969, 0.2386191860831969, -0.9324695142031521,
+        0.9324695142031521 };
+    static double weights_6[] = { 0.3607615730481386, 0.3607615730481386,
+        0.4679139345726910, 0.4679139345726910, 0.1713244923791704,
+        0.1713244923791704 };
             
     static double *int_pts[] = { int_pts_1, int_pts_2, int_pts_3,
-        int_pts_4, int_pts_5 };
+        int_pts_4, int_pts_5, int_pts_6 };
     static double *weights[] = { weights_1, weights_2, weights_3,
-        weights_4, weights_5 };
+        weights_4, weights_5, weights_6 };
 
+    /* write integration templates */
     template <class T> class GaussQuad1D : public Integrator1D<T>
     {
     public:

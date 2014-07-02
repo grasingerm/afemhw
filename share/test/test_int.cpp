@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cassert>
 #include <cmath>
+#include <functional>
 
 using namespace std;
 using namespace gquad;
@@ -16,6 +17,11 @@ int main()
     
     GaussQuad1D<double> Int1D;
     GaussQuad2D<double> Int2D;
+    
+    cout << "integration of x^2: " << Int1D.integrate(f1, 2) << " = 2/3?" << endl;
+    cout << "integration of 3x+5: " << Int1D.integrate(f2, 1) << " = 10?" << endl;
+    cout << "integration of x: " << Int1D.integrate(f3, 1) << " = 0?" << endl;
+    cout << "integration of x^2+y: " << Int2D.integrate(f4, 2) << " = 4/3?" << endl;
     
     ASSERT_NEAR(2.0/3.0, Int1D.integrate(f1, 2), 1e-5);
     ASSERT_NEAR(10.0, Int1D.integrate(f2, 1), 1e-5);

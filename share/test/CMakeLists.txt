@@ -14,7 +14,7 @@ set(CMAKE_BINARY_DIR build)
 set(EXECUTABLE_OUTPUT_PATH bin)
 
 # dependencies
-add_executable(test_int test_int.cpp ../integration.cpp)
+add_executable(test_int test_int.cpp)
 
 install(TARGETS test_int DESTINATION bin)
 

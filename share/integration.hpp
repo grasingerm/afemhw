@@ -93,8 +93,8 @@ namespace gquad
     template <class T> T gquad::GaussQuad1D<T>
         ::integrate(function<T(const double)> f, const unsigned int num_pts)
     {
-        double *int_pts = gquad::int_pts[num_pts];
-        double *weights = gquad::weights[num_pts];
+        double *int_pts = gquad::int_pts[num_pts-1];
+        double *weights = gquad::weights[num_pts-1];
         
         T sum = *weights * f(*int_pts);
         for (unsigned int i = 1; i < num_pts; i++)
@@ -114,13 +114,21 @@ namespace gquad
         ::integrate(function<T(const double, const double)> f, 
             const unsigned int num_pts)
     {
-        double *int_pts = gquad::int_pts[num_pts];
-        double *weights = gquad::weights[num_pts];
+        double *int_pts = gquad::int_pts[num_pts-1];
+        double *weights = gquad::weights[num_pts-1];
         
+        // TODO: is there a cleaner way to do this?
+        // TODO: will this translate well to finite element implementations?
+        // init by computing first row
         T sum = *weights * *weights * f(*int_pts, *int_pts);
+        for (unsigned int j = 1; j < num_pts; j++)
+            sum += *(weights) * *(weights+j) * f(*(int_pts), *(int_pts+j));
+        
+        // finish summation
         for (unsigned int i = 1; i < num_pts; i++)
             for (unsigned int j = 0; j < num_pts; j++)
-                sum += *(weights+i) * *(weights+j) * f(*(int_pts+i), *(int_pts+j));
+                sum += *(weights+i) * *(weights+j) * 
+                    f(*(int_pts+i), *(int_pts+j));
         
         return sum;
     }
@@ -136,11 +144,22 @@ namespace gquad
         ::integrate(function<T(const double, const double, const double)> f, 
             const unsigned int num_pts)
     {
-        double *int_pts = gquad::int_pts[num_pts];
-        double *weights = gquad::weights[num_pts];
+        double *int_pts = gquad::int_pts[num_pts-1];
+        double *weights = gquad::weights[num_pts-1];
         
+        // init by computing first row
+        // TODO: can this be cleaner? more efficient?
         T sum = *weights * *weights * *weights * 
             f(*int_pts, *int_pts, *int_pts);
+        for (unsigned int k = 1; k < num_pts; k++)
+            sum += *(weights) * *(weights) * *(weights+k) *
+                        f(*(int_pts), *(int_pts), *(int_pts+k));
+        for (unsigned int j = 1; j < num_pts; j++)
+            for (unsigned int k = 0; k < num_pts; k++)
+                sum += *(weights) * *(weights+j) * *(weights+k) *
+                        f(*(int_pts), *(int_pts+j), *(int_pts+k));
+        
+        // finish summation
         for (unsigned int i = 1; i < num_pts; i++)
             for (unsigned int j = 0; j < num_pts; j++)
                 for (unsigned int k = 0; k < num_pts; k++)

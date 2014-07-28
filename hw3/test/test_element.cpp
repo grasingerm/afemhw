@@ -28,22 +28,28 @@ int main()
     
     for (unsigned int iter = 0; iter < 1000; iter++)
     {
-        r = rand() % 100 - 50;
-        s = rand() % 100 - 50;
+        r = rand() % 15 - 30;
+        s = rand() % 15 - 30;
         sum = 0;
         
         N = elem.N(r,s);
-        std::cout << N << std::endl;
+        
         for (unsigned int i = 0; i < 8; i++)
             sum += N(0,i);
+        assert(fabs(sum - 1) < 1e-3);
         
-        assert(fabs(sum/norm1(N)) < 1e-5);
+        sum = 0;
+        for (unsigned int i = 0; i < 8; i++)
+            sum += N(1,i);
+        assert(fabs(sum - 1) < 1e-3);
+        
+        std::cout << iter << std::endl;
     }
     
-    assert(abs(linear_N1(1)) < 1e-5);
-    assert(abs(linear_N1(-1)-1) < 1e-5);
-    assert(abs(linear_N2(1)-1) < 1e-5);
-    assert(abs(linear_N2(-1)) < 1e-5);
+    assert(fabs(linear_N1(1)) < 1e-5);
+    assert(fabs(linear_N1(-1)-1) < 1e-5);
+    assert(fabs(linear_N2(1)-1) < 1e-5);
+    assert(fabs(linear_N2(-1)) < 1e-5);
 
     return 0;
 }

@@ -53,9 +53,9 @@ Q4::Q4(pt::Point2D& p, pt::Point2D& q, pt::Point2D& r, pt::Point2D& s)
     nodes[3] = std::shared_ptr<pt::Point2D>(&s);
 }
 
-arma::mat Q4::N(const double xi, const double eta)
+arma::mat::fixed<2,8> Q4::N(const double xi, const double eta)
 {
-    arma::mat N(2,8);
+    arma::mat::fixed<2,8> N;
     for (unsigned int i = 0; i < 4; i++)
     {
         N(0,2*i) = shape_fncts[i](xi,eta);
@@ -67,9 +67,12 @@ arma::mat Q4::N(const double xi, const double eta)
     return N;
 }
 
-arma::mat Q4::J(const double xi, const double eta)
+/**
+ * Map undeformed coordinates to parent coordinates
+ */
+arma::mat::fixed<2,2> Q4::F_o_xi(const double xi, const double eta)
 {
-    arma::mat J(2,2);
+    arma::mat::fixed<2,2> J;
     J.zeros();
     
     for (unsigned int j = 0; j < 4; j++)
@@ -81,4 +84,73 @@ arma::mat Q4::J(const double xi, const double eta)
             J(1,k) += deta_shape_fncts[j](xi) * (*nodes[j])[k];
     
     return J;
+}
+
+/**
+ * Map deformed coordinates to undeformed coordinates
+ */
+arma::mat::fixed<2,2> Q4::F
+    (const double xi, const double eta, const arma::vec& u)
+{
+    arma::mat::fixed<2,2> F;
+    F.zeros();
+    
+    for (unsigned int j = 0; j < 4; j++)
+        for (unsigned int k = 0; k < 2; k++)
+            F(0,k) += dxi_shape_fncts[j](eta) * u(2*j+k);
+            
+    for (unsigned int j = 0; j < 4; j++)
+        for (unsigned int k = 0; k < 2; k++)
+            F(1,k) += deta_shape_fncts[j](xi) * u(2*j+k);
+    
+    /* F = grad(u) + I */
+    for (unsigned int i = 0; i < 2; i++) F(i,i) += 1;
+    
+    return F;
+}
+
+/**
+ * dN matrix
+ */
+arma::mat::fixed<2,4> Q4::dN(const double xi, const double eta)
+{
+    arma::mat::fixed<2,4> dN;
+    
+    for (unsigned int i = 0; i < 4; i++)
+        dN << dxi_shape_fncts[i](eta);
+    dN << arma::endr;
+    
+    for (unsigned int i = 0; i < 4; i++)
+        dN << deta_shape_fncts[i](xi);
+    dN << arma::endr;
+    
+    return dN;
+}
+
+/**
+ * B_o
+ */
+std::array<arma::mat,4> B_o
+    (const double xi, const double eta, const arma::vec& u)
+{
+    /* set up data */
+    std::array<arma::mat,4> B_o;
+    arma::mat B_k;
+    
+    arma::mat::fixed<2,2> s_F = F(xi, eta, u);
+    arma::mat::fixed<2,4> s_dN_dX = dN_dX(xi, eta);
+    
+    for (unsigned int i = 0; i < 4; i++)
+    {
+        B_k = arma::mat(3,2);
+        for (unsigned int j = 0; j < 2; j++)
+            for (unsigned int k = 0; k < 2; k++)
+                B_k(j,k) = s_F(k,j) * s_dN_dX(j,i);
+        for (unsigned int j = 0; j < 2; j++)
+            B_k(2,j) = s_F(j,0)*s_dN_dX(1,i) + s_F(j,1)*s_dN_dX(0,i);
+            
+        B_o[i] = B_k;
+    }
+    
+    return B_o;
 }

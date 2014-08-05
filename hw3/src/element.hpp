@@ -34,14 +34,24 @@ namespace shape_fncts
 
 }
 
+/* TODO: try to minimize/simply interface as much as possible */
 class Q4
 {
 public:
     Q4(pt::Point2D&, pt::Point2D&, pt::Point2D&, pt::Point2D&);
 
-    arma::mat N(const double, const double);
-    arma::mat B(const double, const double);
-    arma::mat J(const double, const double);
+    arma::mat::fixed<2,8> N(const double, const double);
+    arma::mat::fixed<2,2> F_o_xi(const double, const double);
+    arma::mat::fixed<2,4> dN(const double, const double);
+    arma::mat::fixed<2,2> F(const double, const double, const arma::vec&);
+    
+    /* TODO: probably a more efficient way to write this */
+    inline arma::mat::fixed<2,4> dN_dX(const double xi, const double eta)
+        { return F_o_xi(xi, eta).i().t() * dN(xi, eta); } /* F^-t * dN */
+    std::array<arma::mat,4> B_o
+        (const double, const double, const arma::vec&);
+    
+        
 private:
     static const std::array<shape_fncts::ShapeFunction2D,4> shape_fncts;
     static const std::array<double(*)(const double),4> dxi_shape_fncts;

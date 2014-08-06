@@ -38,7 +38,7 @@ namespace shape_fncts
 class Q4
 {
 public:
-    Q4(pt::Point2D&, pt::Point2D&, pt::Point2D&, pt::Point2D&);
+    Q4(pt::Node2D&, pt::Node2D&, pt::Node2D&, pt::Node2D&);
 
     arma::mat::fixed<2,8> N(const double, const double);
     arma::mat::fixed<2,2> F_o_xi(const double, const double);
@@ -50,6 +50,11 @@ public:
         { return F_o_xi(xi, eta).i().t() * dN(xi, eta); } /* F^-t * dN */
     std::array<arma::mat,4> B_o
         (const double, const double, const arma::vec&);
+        
+    std::tuple<arma::vec::fixed<2>,std::array<unsigned int,4>> 
+    P_ext_from_traction
+    (const arma::vec&, const unsigned int, const arma::fixed<2,2>&,
+    const arma::fixed<2,8>&);
     
         
 private:
@@ -57,8 +62,7 @@ private:
     static const std::array<double(*)(const double),4> dxi_shape_fncts;
     static const std::array<double(*)(const double),4> deta_shape_fncts;
     static const arma::Mat<int>::fixed<3,4> e;
-    std::array<std::shared_ptr<pt::Point2D>,4> nodes;
-    std::array<double,8> g_dof;
+    std::array<std::shared_ptr<pt::Node2D>,4> nodes;
 };
 
 #endif /* __ELEMENT_HPP__ */

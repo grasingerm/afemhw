@@ -1,5 +1,7 @@
 #include <armadillo>
 #include <array>
+#include <memory>
+#include <tuple>
 #include "element.hpp"
 
 using namespace shape_fncts;
@@ -45,12 +47,12 @@ static const int e_aux_data[12] =
 
 const arma::Mat<int>::fixed<3,4> Q4::e(e_aux_data);
 
-Q4::Q4(pt::Point2D& p, pt::Point2D& q, pt::Point2D& r, pt::Point2D& s)
+Q4::Q4(pt::Node2D& p, pt::Node2D& q, pt::Node2D& r, pt::Node2D& s)
 {
-    nodes[0] = std::shared_ptr<pt::Point2D>(&p);
-    nodes[1] = std::shared_ptr<pt::Point2D>(&q);
-    nodes[2] = std::shared_ptr<pt::Point2D>(&r);
-    nodes[3] = std::shared_ptr<pt::Point2D>(&s);
+    nodes[0] = std::shared_ptr<pt::Node2D>(&p);
+    nodes[1] = std::shared_ptr<pt::Node2D>(&q);
+    nodes[2] = std::shared_ptr<pt::Node2D>(&r);
+    nodes[3] = std::shared_ptr<pt::Node2D>(&s);
 }
 
 arma::mat::fixed<2,8> Q4::N(const double xi, const double eta)
@@ -77,11 +79,11 @@ arma::mat::fixed<2,2> Q4::F_o_xi(const double xi, const double eta)
     
     for (unsigned int j = 0; j < 4; j++)
         for (unsigned int k = 0; k < 2; k++)
-            J(0,k) += dxi_shape_fncts[j](eta) * (*nodes[j])[k];
+            J(0,k) += dxi_shape_fncts[j](eta) * (nodes[j]->pt)[k];
             
     for (unsigned int j = 0; j < 4; j++)
         for (unsigned int k = 0; k < 2; k++)
-            J(1,k) += deta_shape_fncts[j](xi) * (*nodes[j])[k];
+            J(1,k) += deta_shape_fncts[j](xi) * (nodes[j]->pt)[k];
     
     return J;
 }
@@ -130,7 +132,7 @@ arma::mat::fixed<2,4> Q4::dN(const double xi, const double eta)
 /**
  * B_o
  */
-std::array<arma::mat,4> B_o
+std::array<arma::mat,4> Q4::B_o
     (const double xi, const double eta, const arma::vec& u)
 {
     /* set up data */
@@ -153,4 +155,55 @@ std::array<arma::mat,4> B_o
     }
     
     return B_o;
+}
+
+/**
+ * Gets nodes from edge number
+ */
+std::array<std::shared_pt<pt::Node2D>,2> nodes_from_edge(const unsigned int e)
+{
+    std::array<std::shared_pt<pt::Node2D,2> e_nodes;
+    
+    e_nodes[0] = nodes[e];
+    
+    if (e < 3)
+        e_nodes[1] = nodes[e+1];
+    else
+        e_nodes[1] = nodes[0];
+        
+    return e_nodes;
+}
+
+/**
+ * Given an edge nodes return unit normal to edge
+ */
+arma::vec::fixed<2> unit_normal_from_edge
+    (const std::array<std::shared_pt<pt::Node2D,2> e_nodes)
+{
+    arma::vec::fixed<2> u = pt::vec_from_pts(e_nodes[0]->pt, e_nodes[1]->pt);
+    return pt::unit_normal(u);
+}
+
+/**
+ * Given an edge number and traction vector return gdofs and P
+ */
+std::tuple<arma::vec::fixed<2>,std::array<unsigned int,4>> 
+    Q4::P_ext_from_traction
+    (const arma::vec& t, const unsigned int e, const arma::fixed<2,2>& s_F_o_xi,
+    const arma::fixed<2,8>& s_Nt)
+{
+    std::array<std::shared_pt<pt::Node2D,2> e_nodes = pt::nodes_from_edge(e);
+    arma::vec::fixed<2> N_un = pt::unit_normal_from_edge(e_nodes);
+    double J_oA_xi;
+    
+    J_oA_xi = det(s_F_o_xi) * pt::norm_2D(s_F_o_xi.i().t() * N_un);
+    arma::vec::fixed<2> integrand = s_Nt * t * J_oA_xi;
+    
+    std::array<unsigned int, 4> gdofs;
+    for (unsigned int i = 0; i < 2; i++)
+        for (unsigned int j = 0; j < 2; j++)
+            gdofs[i+j] = e_nodes[i]->gdofs[j];
+    
+    return std::tuple<arma::vec::fixed<2>,unsigned int,unsigned int>
+        (integrand,e_nodes[0]->gdof[0],gdofs);
 }

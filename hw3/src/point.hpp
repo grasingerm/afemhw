@@ -2,6 +2,9 @@
 #define __POINT_H__
 
 #include <iostream>
+#include <armadillo>
+#include <array>
+#include <cmath>
 
 namespace pt
 {
@@ -42,7 +45,18 @@ Point2D operator*(const Point2D&, const double);
 inline Point2D operator*(const double m, Point2D& p) { return p*m; }
 bool operator==(const Point2D&, const Point2D&);
 
-double euclidean_distance(Point2D&, Point2D&);
+double euclidean_distance(const Point2D&, const Point2D&);
+arma::vec::fixed<2> vec_from_pts(const Point2D&, const Point2D&);
+arma::vec::fixed<2> unit_normal(const arma::vec&);
+inline double norm_2D(const arma::vec& u) { return sqrt(u(0)*u(0)+u(1)*u(1)); }
+
+class Node2D
+{
+public:
+    Node2D(const Point2D& p, const unsigned int gdof1, const unsigned int gdof2)
+        : pt(p) { gdofs[0] = gdof1; gdofs[1] = gdof2; }
+    std::array<unsigned int,2> gdofs;
+}
 
 }
 

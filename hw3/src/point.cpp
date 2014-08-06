@@ -57,4 +57,20 @@ double euclidean_distance(const Point2D& p, const Point2D& q)
     return sqrt((p[X]-q[X])*(p[X]-q[X]) + (p[Y]-q[Y])*(p[Y]-q[Y]));
 }
 
+arma::vec::fixed<2> vec_from_pts(const Point2D& p, const Point2D& q)
+{
+    arma::vec::fixed<2> line;
+    line << p[X]-q[X] << p[Y]-q[Y];
+    return line;
+}
+
+arma::vec::fixed<2> unit_normal(const arma::vec& u)
+{
+    arma::vec::fixed<2> N;
+    double slope = u(1)/u(0);
+    N << 1 << -1/slope;
+    N /= norm_2D(N);
+    return N;
+}
+
 }

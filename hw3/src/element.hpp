@@ -7,6 +7,11 @@
 #include <armadillo>
 #include "point.hpp"
 
+/**
+ * TODO list
+ * TODO: instead of "shape function" class. use and combine surfaces
+ */
+
 /* shape function definitions */
 namespace shape_fncts
 {
@@ -53,10 +58,17 @@ public:
         
     std::tuple<arma::vec::fixed<2>,std::array<unsigned int,4>> 
     P_ext_from_traction
-    (const arma::vec&, const unsigned int, const arma::fixed<2,2>&,
-    const arma::fixed<2,8>&);
+    (const arma::vec&, const unsigned int, const arma::vec&, const arma::mat&);
     
-        
+    /* traction */
+    std::array<std::shared_ptr<pt::Node2D>,2> 
+        nodes_from_edge(const unsigned int);
+    arma::vec::fixed<2> unit_normal_from_edge_nodes
+        (const std::array<std::shared_ptr<pt::Node2D>,2>);
+    std::tuple<arma::vec::fixed<2>,std::array<std::shared_ptr<pt::Node2D>,2>>
+        P_ext_from_traction
+        (const arma::vec&, const unsigned int, const arma::mat&,
+        const arma::mat&);
 private:
     static const std::array<shape_fncts::ShapeFunction2D,4> shape_fncts;
     static const std::array<double(*)(const double),4> dxi_shape_fncts;

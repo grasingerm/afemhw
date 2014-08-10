@@ -56,7 +56,8 @@ public:
     Node2D(const Point2D& p, const unsigned int gdof1, const unsigned int gdof2)
         : pt(p) { gdofs[0] = gdof1; gdofs[1] = gdof2; }
     std::array<unsigned int,2> gdofs;
-}
+    Point2D pt;
+};
 
 }
 

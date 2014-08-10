@@ -15,26 +15,32 @@ ShapeFunction2D::ShapeFunction2D(double (* const nxi)(const double),
 
 const std::array<ShapeFunction2D,4> Q4::shape_fncts =
 {
-    ShapeFunction2D(&linear_N2, &linear_N2),
-    ShapeFunction2D(&linear_N1, &linear_N2),
-    ShapeFunction2D(&linear_N1, &linear_N1),
-    ShapeFunction2D(&linear_N2, &linear_N1)
+    {
+        ShapeFunction2D(&linear_N2, &linear_N2),
+        ShapeFunction2D(&linear_N1, &linear_N2),
+        ShapeFunction2D(&linear_N1, &linear_N1),
+        ShapeFunction2D(&linear_N2, &linear_N1)
+    }
 };
 
 const std::array<double(*)(const double),4> Q4::dxi_shape_fncts =
 {
-    &linear_dN2N2,
-    &linear_dN2N1,
-    &linear_dN1N1,
-    &linear_dN1N2
+    {
+        &linear_dN2N2,
+        &linear_dN2N1,
+        &linear_dN1N1,
+        &linear_dN1N2
+    }
 };
 
 const std::array<double(*)(const double),4> Q4::deta_shape_fncts =
 {
-    &linear_dN2N2,
-    &linear_dN1N2,
-    &linear_dN1N1,
-    &linear_dN2N1
+    {
+        &linear_dN2N2,
+        &linear_dN1N2,
+        &linear_dN1N1,
+        &linear_dN2N1
+    }
 };
 
 static const int e_aux_data[12] =
@@ -160,9 +166,10 @@ std::array<arma::mat,4> Q4::B_o
 /**
  * Gets nodes from edge number
  */
-std::array<std::shared_pt<pt::Node2D>,2> nodes_from_edge(const unsigned int e)
+std::array<std::shared_ptr<pt::Node2D>,2>
+    Q4::nodes_from_edge(const unsigned int e)
 {
-    std::array<std::shared_pt<pt::Node2D,2> e_nodes;
+    std::array<std::shared_ptr<pt::Node2D>,2> e_nodes;
     
     e_nodes[0] = nodes[e];
     
@@ -177,33 +184,34 @@ std::array<std::shared_pt<pt::Node2D>,2> nodes_from_edge(const unsigned int e)
 /**
  * Given an edge nodes return unit normal to edge
  */
-arma::vec::fixed<2> unit_normal_from_edge
-    (const std::array<std::shared_pt<pt::Node2D,2> e_nodes)
+arma::vec::fixed<2> unit_normal_from_edge_nodes
+    (const std::array<std::shared_ptr<pt::Node2D>,2> e_nodes)
 {
     arma::vec::fixed<2> u = pt::vec_from_pts(e_nodes[0]->pt, e_nodes[1]->pt);
     return pt::unit_normal(u);
 }
 
 /**
- * Given an edge number and traction vector return gdofs and P
+ * Given an edge number and traction vector return nodes and P
  */
-std::tuple<arma::vec::fixed<2>,std::array<unsigned int,4>> 
+std::tuple<
+    arma::vec::fixed<2>,
+    std::array<std::shared_ptr<pt::Node2D>,2>
+    > 
     Q4::P_ext_from_traction
-    (const arma::vec& t, const unsigned int e, const arma::fixed<2,2>& s_F_o_xi,
-    const arma::fixed<2,8>& s_Nt)
+    (const arma::vec& t, const unsigned int e, const arma::mat& s_F_o_xi,
+    const arma::mat& s_Nt)
 {
-    std::array<std::shared_pt<pt::Node2D,2> e_nodes = pt::nodes_from_edge(e);
-    arma::vec::fixed<2> N_un = pt::unit_normal_from_edge(e_nodes);
+    std::array<std::shared_ptr<pt::Node2D>,2> e_nodes = nodes_from_edge(e);
+    arma::vec::fixed<2> N_un = unit_normal_from_edge_nodes(e_nodes);
     double J_oA_xi;
     
-    J_oA_xi = det(s_F_o_xi) * pt::norm_2D(s_F_o_xi.i().t() * N_un);
+    J_oA_xi = arma::det(s_F_o_xi) * pt::norm_2D(s_F_o_xi.i().t() * N_un);
     arma::vec::fixed<2> integrand = s_Nt * t * J_oA_xi;
     
-    std::array<unsigned int, 4> gdofs;
-    for (unsigned int i = 0; i < 2; i++)
-        for (unsigned int j = 0; j < 2; j++)
-            gdofs[i+j] = e_nodes[i]->gdofs[j];
-    
-    return std::tuple<arma::vec::fixed<2>,unsigned int,unsigned int>
-        (integrand,e_nodes[0]->gdof[0],gdofs);
+    return std::tuple<
+        arma::vec::fixed<2>,
+        std::array<std::shared_ptr<pt::Node2D>,2>
+        >
+        (integrand,e_nodes);
 }

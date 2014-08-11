@@ -163,6 +163,34 @@ std::array<arma::mat,4> Q4::B_o
     return B_o;
 }
 
+/*
+ * B_geom
+ *
+ * if move semantics aren't used here this will be a resource nightmare
+ */
+std::array<arma::mat,4> Q4::B_geom (const double, const double)
+{
+    /* set up data */
+    std::array<arma::mat,4> B_geom;
+    arma::mat B_k;
+    
+    arma::mat::fixed<2,4> s_dN_dX = dN_dX(xi, eta);
+    
+    for (unsigned int j = 0; j < s_dN_dX.n_cols; j++)
+    {
+        B_k = arma::mat(4,2);
+        B_k.zeros();
+        
+        for (unsigned int i = 0; i < s_dN_dX.n_rows; i++)
+            for (unsigned int k = 0; k < s_dN_dX.n_rows; k++)
+                B_k(i+2*k,0) = s_dN_dX(i,j);
+                
+        B_geom[j] = B_k;
+    }
+    
+    return B_geom;
+}
+
 /**
  * Gets nodes from edge number
  */

@@ -55,6 +55,7 @@ public:
         { return F_o_xi(xi, eta).i().t() * dN(xi, eta); } /* F^-t * dN */
     std::array<arma::mat,4> B_o
         (const double, const double, const arma::vec&);
+    std::array<arma::mat,4> B_geom (const double, const double);
         
     std::tuple<arma::vec::fixed<2>,std::array<unsigned int,4>> 
     P_ext_from_traction

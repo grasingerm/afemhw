@@ -26,6 +26,4 @@
 *CMakeCache.txt*
 build/
 bin/
-*CMakeFiles/*
-CMakeFiles/
 

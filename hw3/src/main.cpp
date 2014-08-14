@@ -31,24 +31,25 @@ const static double E = 100.;
 const static double v = 0.45;
 
 /* TODO: encapsulate this in an object */
-mat material_tangent_stiffness(const double, const double);
+mat material_tangent_moduli(const double, const double);
 vec solve_nonlinear_static_by_TL
     (const list<Q4> elem_list, vec u_guess, const double delta_load_factor, 
     const double tolerance, const unsigned int max_iter);
 double norm_L2(const vec&);    
     
 
-int main(int argc, *char argv[])
+int main(int argc, char* argv[])
 {
     mat C_SE = material_tangent_moduli(E, v);
     
     /* mesh data */
     unsigned int num_nodes = 4;
-    double x_coords { {0., 5., 5., 0.} };
-    double y_coords { {0., 2., 5., 8.} };
+    double x_coords[] = {0., 5., 5., 0.};
+    double y_coords[] = {0., 2., 5., 8.};
     
     const double tol = 1e-4;
     const unsigned int max_iter = 1e5;
+    const double delta_load_factor = 0.1;
     
     vector<Node2D> node_list;
     for (unsigned int i = 0; i < num_nodes; i++)
@@ -88,7 +89,7 @@ int main(int argc, *char argv[])
     mat A(ndofs, ndofs);
     A.zeros();
     
-    double xi, eta, sum;
+    double xi, eta;
     
     array<mat,4> B_o;
     array<mat,4> B_geom;
@@ -102,7 +103,7 @@ int main(int argc, *char argv[])
     
     /* calculate P_o */
     P_o.zeros();
-    for (auto elem& : elem_list)
+    for (auto& elem : element_list)
     {
         for (unsigned int i = 0; i < 2; i++)
         {
@@ -112,23 +113,24 @@ int main(int argc, *char argv[])
                 eta = int_pts[j];
                 
                 /* calculate mappings */
-                s_F = elem.F(xi, eta);
-                s_F_o_xi = elem.F_o_xi(xi, eta, u);
-                double s_J_o_xi = det(s_F_o_xi);
+                s_F_o_xi = elem.F_o_xi(xi, eta);
                 s_N = elem.N(xi, eta);
                 
                 /* TODO: fix heuristic, slice by "edge number" */
-                s_Nt = s_N.cols(4).t();
+                s_Nt = s_N.cols(0,3).t();
                 
                 /* assemble P_ext */
-                tie(auto& p_e, auto& nodes) = elem.P_ext_from_traction
+                vec::fixed<4> p_e;
+                array<shared_ptr<Node2D>,2> nodes;
+                tie(p_e, nodes) = elem.P_ext_from_traction
                             (tau, 1, s_F_o_xi, s_Nt);
                 
                 for (unsigned int i = 0; i < nodes.size(); i++)
                 {
-                    auto& node = nodes[i];
+                    auto& node_ptr = nodes[i];
                     for (unsigned int j = 0; j < 2; j++)
-                        P_o(node.gdofs[j]) += p_e(2*i+j);
+                        P_o(node_ptr->gdofs[j]) += 
+                            weights[i]*weights[j]*p_e(2*i+j);
                 }
                 P_o *= lf;
             }
@@ -138,17 +140,20 @@ int main(int argc, *char argv[])
     vec I_k;
     I_k.zeros();
     
+    unsigned int total_iterations = 0;
     while ( (lf += delta_load_factor) <= 1. )
     {
         unsigned int iter = 0;
         double err = 1e9;
         
-        vec R_o, P_ext = P_o*lf; 
+        vec R_o, P_ext = P_o*lf;
         while (++iter < max_iter && err > tol)
         {
+            total_iterations++;
+        
             /* integrate over elements */
             /* compute residual, and jacobian */
-            for (auto elem& : elem_list)
+            for (auto& elem : element_list)
             {
                 for (unsigned int i = 0; i < 2; i++)
                 {
@@ -158,13 +163,10 @@ int main(int argc, *char argv[])
                         eta = int_pts[j];
                     
                         /* calculate mappings */
-                        s_F = elem.F(xi, eta);
-                        s_F_o_xi = elem.F_o_xi(xi, eta, u);
+                        s_F = elem.F(xi, eta, u);
+                        s_F_o_xi = elem.F_o_xi(xi, eta);
                         double s_J_o_xi = det(s_F_o_xi);
                         s_N = elem.N(xi, eta);
-                        
-                        /* TODO: fix heuristic, slice by "edge number" */
-                        s_Nt = s_N.cols(4).t();
                         
                         B_o = elem.B_o(xi, eta, u);
                         B_geom = elem.B_geom(xi, eta);
@@ -201,13 +203,14 @@ int main(int argc, *char argv[])
                             for (unsigned int i = 0; i < 2; i++)
                                 for (unsigned int j = 0; j < 2; j++)
                                     A(elem.gdof(k,i), elem.gdof(k,j)) 
-                                        += A_e(i,j);
+                                        += weights[i]*weights[j] * A_e(i,j);
                                         
                             vec I_e = B_o[k].t() * S * s_J_o_xi;
                             
                             /* assemble */
                             for (unsigned int i = 0; i < 2; i++)
-                                I_k(elem.gdof(k,i)) += I_e(i);
+                                I_k(elem.gdof(k,i)) += 
+                                    weights[i]*weights[j]*I_e(i);
                         }
                     }
                 }
@@ -240,7 +243,7 @@ int main(int argc, *char argv[])
     
     cout << "solution:" << endl
          << "u = " << endl << u << endl
-         << "in " << iter << " iterations." << endl
+         << "in " << total_iterations << " iterations." << endl;
     
     return 0;
 }

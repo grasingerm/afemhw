@@ -178,7 +178,7 @@ std::array<arma::mat,4> Q4::B_o
  *
  * if move semantics aren't used here this will be a resource nightmare
  */
-std::array<arma::mat,4> Q4::B_geom (const double, const double)
+std::array<arma::mat,4> Q4::B_geom (const double xi, const double eta)
 {
     /* set up data */
     std::array<arma::mat,4> B_geom;
@@ -229,6 +229,9 @@ arma::vec::fixed<2> unit_normal_from_edge_nodes
     return pt::unit_normal(u);
 }
 
+/* TODO: anything that isn't a mapping and is a mechanical calculation should 
+ *          be contained within a 'physics'/'model'/'mechanics'/etc class */
+ // THIS DOESN'T BELONG HERE. MOVE IT
 /**
  * Given an edge number and traction vector return nodes and P
  */

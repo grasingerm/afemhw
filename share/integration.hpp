@@ -28,13 +28,6 @@ public:
         const unsigned int) = 0;
 };
 
-template <class T> class FEMIntegrator2D
-{
-public:
-    T integrate(function<T(const Q4&, const double, const double)>, const Q4&,
-        const unsigned int);
-};
-
 /* gauss quadrature */
 namespace gquad
 {
@@ -93,6 +86,13 @@ namespace gquad
     public:
         GaussQuad3D() {};
         T integrate(function<T(const double, const double, const double)>, 
+            const unsigned int);
+    };
+    
+    template <class T> class FEMIntegrator2D
+    {
+    public:
+        T integrate(function<T(const Q4&, const double, const double)>, const Q4&,
             const unsigned int);
     };
     

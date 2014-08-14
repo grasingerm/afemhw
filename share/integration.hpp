@@ -28,6 +28,13 @@ public:
         const unsigned int) = 0;
 };
 
+template <class T> class FEMIntegrator2D
+{
+public:
+    T integrate(function<T(const Q4&, const double, const double)>, const Q4&,
+        const unsigned int);
+};
+
 /* gauss quadrature */
 namespace gquad
 {
@@ -175,7 +182,30 @@ namespace gquad
         
         return sum;
     }
-
+    
+    template <class T> T FEMIntegrator2D<T>
+        ::integrate(function<T(const Q4&, const double, const double)> f, 
+        const Q4& elem, const unsigned int num_pts)
+    {
+        double *int_pts = gquad::int_pts[num_pts-1];
+        double *weights = gquad::weights[num_pts-1];
+        
+        // TODO: is there a cleaner way to do this?
+        // TODO: will this translate well to finite element implementations?
+        // init by computing first row
+        T sum = *weights * *weights * f(elem, *int_pts, *int_pts);
+        for (unsigned int j = 1; j < num_pts; j++)
+            sum += *(weights) * *(weights+j) * 
+                f(elem, *(int_pts), *(int_pts+j));
+        
+        // finish summation
+        for (unsigned int i = 1; i < num_pts; i++)
+            for (unsigned int j = 0; j < num_pts; j++)
+                sum += *(weights+i) * *(weights+j) * 
+                    f(elem, *(int_pts+i), *(int_pts+j));
+        
+        return sum;
+    }
 }
 
 #endif /* __INTEGRATION_HPP__ */

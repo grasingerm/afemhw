@@ -66,15 +66,19 @@ public:
         nodes_from_edge(const unsigned int);
     arma::vec::fixed<2> unit_normal_from_edge_nodes
         (const std::array<std::shared_ptr<pt::Node2D>,2>);
-    std::tuple<arma::vec::fixed<2>,std::array<std::shared_ptr<pt::Node2D>,2>>
+    std::tuple<arma::vec::fixed<4>,std::array<std::shared_ptr<pt::Node2D>,2>>
         P_ext_from_traction
         (const arma::vec&, const unsigned int, const arma::mat&,
         const arma::mat&);
+    inline unsigned int n_nodes() { return nodes.size(); }
+    inline unsigned int gdof(unsigned int node, unsigned int dof)
+        { return nodes[node]->gdofs[dof]; }
+    
 private:
     static const std::array<shape_fncts::ShapeFunction2D,4> shape_fncts;
     static const std::array<double(*)(const double),4> dxi_shape_fncts;
     static const std::array<double(*)(const double),4> deta_shape_fncts;
-    static const arma::Mat<int>::fixed<3,4> e;
+    //static const arma::Mat<int>::fixed<3,4> e;
     std::array<std::shared_ptr<pt::Node2D>,4> nodes;
 };
 

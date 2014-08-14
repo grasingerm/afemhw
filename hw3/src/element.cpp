@@ -4,6 +4,12 @@
 #include <tuple>
 #include "element.hpp"
 
+/*
+ * TODO: write inputs and outputs for each "piece"/"unit"/function. 
+            highlight redundancies and similarities to minimize calculating 
+            the same value twice
+ */
+
 using namespace shape_fncts;
 
 ShapeFunction2D::ShapeFunction2D(double (* const nxi)(const double),
@@ -43,6 +49,7 @@ const std::array<double(*)(const double),4> Q4::deta_shape_fncts =
     }
 };
 
+/*
 static const int e_aux_data[12] =
 {
     1, 0, 0,
@@ -52,6 +59,7 @@ static const int e_aux_data[12] =
 };
 
 const arma::Mat<int>::fixed<3,4> Q4::e(e_aux_data);
+*/
 
 Q4::Q4(pt::Node2D& p, pt::Node2D& q, pt::Node2D& r, pt::Node2D& s)
 {
@@ -136,6 +144,7 @@ arma::mat::fixed<2,4> Q4::dN(const double xi, const double eta)
 }
 
 /**
+ * TODO: consider rewrite to take s_F and s_dN_dX as input
  * B_o
  */
 std::array<arma::mat,4> Q4::B_o
@@ -164,6 +173,7 @@ std::array<arma::mat,4> Q4::B_o
 }
 
 /*
+ * TODO: consider taking dN_dX as input
  * B_geom
  *
  * if move semantics aren't used here this will be a resource nightmare
@@ -223,7 +233,7 @@ arma::vec::fixed<2> unit_normal_from_edge_nodes
  * Given an edge number and traction vector return nodes and P
  */
 std::tuple<
-    arma::vec::fixed<2>,
+    arma::vec::fixed<4>,
     std::array<std::shared_ptr<pt::Node2D>,2>
     > 
     Q4::P_ext_from_traction
@@ -235,10 +245,10 @@ std::tuple<
     double J_oA_xi;
     
     J_oA_xi = arma::det(s_F_o_xi) * pt::norm_2D(s_F_o_xi.i().t() * N_un);
-    arma::vec::fixed<2> integrand = s_Nt * t * J_oA_xi;
+    arma::vec::fixed<4> integrand = s_Nt * t * J_oA_xi;
     
     return std::tuple<
-        arma::vec::fixed<2>,
+        arma::vec::fixed<4>,
         std::array<std::shared_ptr<pt::Node2D>,2>
         >
         (integrand,e_nodes);

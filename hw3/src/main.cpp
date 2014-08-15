@@ -99,50 +99,54 @@ int main(int argc, char* argv[])
     mat::fixed<2,8> s_N;
     
     tuple<vec::fixed<2>, array<shared_ptr<Node2D>,2>> tresult;
-    mat::fixed<2,2> s_Nt;
+    mat::fixed<4,2> s_Nt;
     
+    cout << "calculate P_o ... ";
     /* calculate P_o */
     P_o.zeros();
     for (auto& elem : element_list)
     {
-        for (unsigned int i = 0; i < 2; i++)
+        double weight = 2;
+        double xi = 0.;
+        double eta = 1.;
+        
+        /* calculate mappings */
+        s_F_o_xi = elem.F_o_xi(xi, eta);
+        s_N = elem.N(xi, eta);
+        
+        /* TODO: fix heuristic, slice by "edge number" */
+        s_Nt = s_N.cols(0,3).t();
+        
+        /* assemble P_ext */
+        vec::fixed<4> p_e;
+        array<shared_ptr<Node2D>,2> nodes;
+        tie(p_e, nodes) = elem.P_ext_from_traction
+                    (tau, 1, s_F_o_xi, s_Nt);
+        
+        cout << "p_e = " << p_e << endl;
+        cout << "xi = " << xi << endl;
+        cout << "eta = " << eta << endl;
+        
+        for (unsigned int i = 0; i < nodes.size(); i++)
         {
+            auto& node_ptr = nodes[i];
             for (unsigned int j = 0; j < 2; j++)
-            {
-                xi = int_pts[i];
-                eta = int_pts[j];
-                
-                /* calculate mappings */
-                s_F_o_xi = elem.F_o_xi(xi, eta);
-                s_N = elem.N(xi, eta);
-                
-                /* TODO: fix heuristic, slice by "edge number" */
-                s_Nt = s_N.cols(0,3).t();
-                
-                /* assemble P_ext */
-                vec::fixed<4> p_e;
-                array<shared_ptr<Node2D>,2> nodes;
-                tie(p_e, nodes) = elem.P_ext_from_traction
-                            (tau, 1, s_F_o_xi, s_Nt);
-                
-                for (unsigned int i = 0; i < nodes.size(); i++)
-                {
-                    auto& node_ptr = nodes[i];
-                    for (unsigned int j = 0; j < 2; j++)
-                        P_o(node_ptr->gdofs[j]) += 
-                            weights[i]*weights[j]*p_e(2*i+j);
-                }
-                P_o *= lf;
-            }
+                P_o(node_ptr->gdofs[j]) += 
+                    weights[i]*weights[j]*p_e(2*i+j);
         }
     }
     
-    vec I_k;
+    cout << " ... done" << endl;
+    cout << "P_o = " << endl << P_o << endl;
+    
+    vec I_k(8);
     I_k.zeros();
     
+    cout << "starting iterative solution ..." << endl;
     unsigned int total_iterations = 0;
     while ( (lf += delta_load_factor) <= 1. )
     {
+        cout << "load factor: " << lf << endl;
         unsigned int iter = 0;
         double err = 1e9;
         
@@ -150,6 +154,7 @@ int main(int argc, char* argv[])
         while (++iter < max_iter && err > tol)
         {
             total_iterations++;
+            cout << "iter: " << iter << " total_iter: " << total_iterations << endl;
         
             /* integrate over elements */
             /* compute residual, and jacobian */
@@ -179,7 +184,7 @@ int main(int argc, char* argv[])
                         I.eye();
                         mat E_green = s_F * trans(s_F) - I;
                         vec Ev_green(3);
-                        Ev_green << E_green(0) << E_green(3) << E_green(1);
+                        Ev_green << E_green(0,0) << E_green(1,1) << E_green(1,0);
                         vec S = C_SE * Ev_green;
                         mat S_bar(4,4);
                         S_bar.zeros();
@@ -223,7 +228,7 @@ int main(int argc, char* argv[])
             //TODO: fix heuristic/generalize
             u(1) = 0;
             u(7) = 0;
-                    
+
             /* compute correction */
             assert(solve(delta_u, A, -R));
             

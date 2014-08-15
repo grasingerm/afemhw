@@ -133,12 +133,10 @@ arma::mat::fixed<2,4> Q4::dN(const double xi, const double eta)
     arma::mat::fixed<2,4> dN;
     
     for (unsigned int i = 0; i < 4; i++)
-        dN << dxi_shape_fncts[i](eta);
-    dN << arma::endr;
-    
-    for (unsigned int i = 0; i < 4; i++)
-        dN << deta_shape_fncts[i](xi);
-    dN << arma::endr;
+    {
+        dN(0,i) = dxi_shape_fncts[i](eta);
+        dN(1,i) = deta_shape_fncts[i](xi);
+    }
     
     return dN;
 }
@@ -222,7 +220,7 @@ std::array<std::shared_ptr<pt::Node2D>,2>
 /**
  * Given an edge nodes return unit normal to edge
  */
-arma::vec::fixed<2> unit_normal_from_edge_nodes
+inline arma::vec::fixed<2> unit_normal_from_edge_nodes
     (const std::array<std::shared_ptr<pt::Node2D>,2> e_nodes)
 {
     arma::vec::fixed<2> u = pt::vec_from_pts(e_nodes[0]->pt, e_nodes[1]->pt);
@@ -244,7 +242,7 @@ std::tuple<
     const arma::mat& s_Nt)
 {
     std::array<std::shared_ptr<pt::Node2D>,2> e_nodes = nodes_from_edge(e);
-    arma::vec::fixed<2> N_un = unit_normal_from_edge_nodes(e_nodes);
+    arma::vec::fixed<2> N_un = ::unit_normal_from_edge_nodes(e_nodes);
     double J_oA_xi;
     
     J_oA_xi = arma::det(s_F_o_xi) * pt::norm_2D(s_F_o_xi.i().t() * N_un);

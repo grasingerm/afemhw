@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <iostream>
+#include <fstream>
 #include <armadillo>
 #include <list>
 #include <vector>
@@ -40,6 +41,9 @@ double norm_L2(const vec&);
 
 int main(int argc, char* argv[])
 {
+    ofstream ofile;
+    ofile.open("hw3.txt");
+
     mat C_SE = material_tangent_moduli(E, v);
     
     /* mesh data */
@@ -49,14 +53,14 @@ int main(int argc, char* argv[])
     
     const double tol = 1e-4;
     const unsigned int max_iter = 1e5;
-    const double delta_load_factor = 0.1;
+    const double delta_load_factor = 0.05;
     
     vector<Node2D> node_list;
     for (unsigned int i = 0; i < num_nodes; i++)
         node_list.emplace_back(Point2D(x_coords[i], y_coords[i]), 2*i, 2*i+1);
     
-    cout << "Nodes: " << endl;
-    for (auto& node : node_list) cout << node.pt << endl;
+    ofile << "Nodes: " << endl;
+    for (auto& node : node_list) ofile << node.pt << endl;
    
     list<Q4> element_list;
     element_list.emplace_back(Q4(node_list[0], node_list[1], node_list[2],
@@ -101,7 +105,7 @@ int main(int argc, char* argv[])
     tuple<vec::fixed<2>, array<shared_ptr<Node2D>,2>> tresult;
     mat::fixed<4,2> s_Nt;
     
-    cout << "calculate P_o ... ";
+    ofile << "calculate P_o ... ";
     /* calculate P_o */
     P_o.zeros();
     for (auto& elem : element_list)
@@ -123,30 +127,30 @@ int main(int argc, char* argv[])
         tie(p_e, nodes) = elem.P_ext_from_traction
                     (tau, 1, s_F_o_xi, s_Nt);
         
-        cout << "p_e = " << p_e << endl;
-        cout << "xi = " << xi << endl;
-        cout << "eta = " << eta << endl;
+        ofile << "p_e = " << p_e << endl;
+        ofile << "xi = " << xi << endl;
+        ofile << "eta = " << eta << endl;
         
         for (unsigned int i = 0; i < nodes.size(); i++)
         {
             auto& node_ptr = nodes[i];
             for (unsigned int j = 0; j < 2; j++)
                 P_o(node_ptr->gdofs[j]) += 
-                    weights[i]*weights[j]*p_e(2*i+j);
+                    weight*p_e(2*i+j);
         }
     }
     
-    cout << " ... done" << endl;
-    cout << "P_o = " << endl << P_o << endl;
+    ofile << " ... done" << endl;
+    ofile << "P_o = " << endl << P_o << endl;
     
     vec I_k(8);
     I_k.zeros();
     
-    cout << "starting iterative solution ..." << endl;
+    ofile << "starting iterative solution ..." << endl;
     unsigned int total_iterations = 0;
     while ( (lf += delta_load_factor) <= 1. )
     {
-        cout << "load factor: " << lf << endl;
+        ofile << "load factor: " << lf << endl;
         unsigned int iter = 0;
         double err = 1e9;
         
@@ -154,7 +158,7 @@ int main(int argc, char* argv[])
         while (++iter < max_iter && err > tol)
         {
             total_iterations++;
-            cout << "iter: " << iter << " total_iter: " << total_iterations << endl;
+            ofile << "iter: " << iter << " total_iter: " << total_iterations << endl;
         
             /* integrate over elements */
             /* compute residual, and jacobian */
@@ -222,7 +226,9 @@ int main(int argc, char* argv[])
             } /* end loop over elements/assembly */
             
             /* compute residual */
-            vec R = I_k - P_o;
+            vec R = I_k - P_ext;
+            ofile << "I = " << endl << I_k << endl;
+            ofile << "R = " << endl << R << endl;
             
             /* enforce homogeneous essential boundary conditions */
             //TODO: fix heuristic/generalize
@@ -235,21 +241,29 @@ int main(int argc, char* argv[])
             /* update solution */
             u += delta_u;
             
+            ofile << "A = " << endl << A << endl
+                 << "delta_u = " << endl << delta_u << endl;
+            
             /* compute error */
             if (iter == 1)
                 R_o = R;
                 
             err = norm_L2(R) / norm_L2(R_o);
+            
+            ofile << "err = " << err << endl;
         }
+        ofile << "===========================================" << endl << endl;
+        
         /* make updates */
         I_k = P_ext;
         
     }
     
-    cout << "solution:" << endl
+    ofile << "solution:" << endl
          << "u = " << endl << u << endl
          << "in " << total_iterations << " iterations." << endl;
     
+    ofile.close();
     return 0;
 }
 

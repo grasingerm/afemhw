@@ -108,19 +108,15 @@ arma::mat::fixed<2,2> Q4::F_o_xi(const double xi, const double eta)
 arma::mat::fixed<2,2> Q4::F
     (const double xi, const double eta, const arma::vec& u)
 {
+    arma::mat::fixed<2,4> s_dN_dX = dN_dX(xi, eta);
+
     arma::mat::fixed<2,2> F;
-    F.zeros();
+    F.eye();
     
-    for (unsigned int j = 0; j < 4; j++)
-        for (unsigned int k = 0; k < 2; k++)
-            F(0,k) += dxi_shape_fncts[j](eta) * u(2*j+k);
-            
-    for (unsigned int j = 0; j < 4; j++)
-        for (unsigned int k = 0; k < 2; k++)
-            F(1,k) += deta_shape_fncts[j](xi) * u(2*j+k);
-    
-    /* F = grad(u) + I */
-    for (unsigned int i = 0; i < 2; i++) F(i,i) += 1;
+    for (unsigned int i = 0; i < 2; i++)
+        for (unsigned int j = 0; j < 4; j++)
+            for (unsigned int k = 0; k < 2; k++)
+                F(i,k) += s_dN_dX(i,j) * u(2*j+k);
     
     return F;
 }

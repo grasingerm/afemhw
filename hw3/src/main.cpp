@@ -202,6 +202,12 @@ int main(int argc, char* argv[])
                         S_bar(3,2) = S(2);
                         S_bar(3,3) = S(1);
                         
+                        ofile << "F " << endl << s_F << endl;
+                        ofile << "S " << endl << S << endl;
+                        ofile << "S_bar " << endl << S_bar << endl;
+                        ofile << "E " << endl << E_green << endl;
+                        ofile << "Evgt " << endl << Ev_green << endl;
+                        
                         /* material and geometric tangent stiffness */
                         for (unsigned int k = 0; k < elem.n_nodes(); k++)
                         {
@@ -215,6 +221,7 @@ int main(int argc, char* argv[])
                                         += weights[i]*weights[j] * A_e(i,j);
                                         
                             vec I_e = B_o[k].t() * S * s_J_o_xi;
+                            ofile << "I_e " << endl << I_e << endl;
                             
                             /* assemble */
                             for (unsigned int i = 0; i < 2; i++)

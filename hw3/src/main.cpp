@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
     
     const double tol = 1e-4;
     const unsigned int max_iter = 1e5;
-    const double delta_load_factor = 0.05;
+    const double delta_load_factor = 0.01;
     
     vector<Node2D> node_list;
     for (unsigned int i = 0; i < num_nodes; i++)

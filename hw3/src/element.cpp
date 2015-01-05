@@ -223,6 +223,31 @@ inline arma::vec::fixed<2> unit_normal_from_edge_nodes
     return pt::unit_normal(u);
 }
 
+arma::vec::fixed<2> unit_normal_from_edge(const unsigned int e)
+{
+    arma::vec::fixed<2> N;
+    
+    switch(e)
+    {
+        case 1:
+            N << 0 << -1;
+            break;
+        case 2:
+            N << 1 << 0;
+            break;
+        case 3:
+            N << 0 << 1;
+            break;
+        case 4:
+            N << -1 << 0;
+            break;
+        default:
+            throw 20;
+    }
+    
+    return N;
+}
+
 /* TODO: anything that isn't a mapping and is a mechanical calculation should 
  *          be contained within a 'physics'/'model'/'mechanics'/etc class */
  // THIS DOESN'T BELONG HERE. MOVE IT
@@ -238,7 +263,7 @@ std::tuple<
     const arma::mat& s_Nt)
 {
     std::array<std::shared_ptr<pt::Node2D>,2> e_nodes = nodes_from_edge(e);
-    arma::vec::fixed<2> N_un = ::unit_normal_from_edge_nodes(e_nodes);
+    arma::vec::fixed<2> N_un = ::unit_normal_from_edge(e);
     double J_oA_xi;
     
     J_oA_xi = arma::det(s_F_o_xi) * pt::norm_2D(s_F_o_xi.i().t() * N_un);

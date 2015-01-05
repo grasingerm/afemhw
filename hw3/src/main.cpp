@@ -107,22 +107,22 @@ int main(int argc, char* argv[])
     
     ofile << "calculate P_o ... ";
     /* calculate P_o */
-    P_o.zeros();
+/*    P_o.zeros();
     for (auto& elem : element_list)
     {
         double weight = 2;
-        double xi = 0.;
-        double eta = 1.;
-        
+        double xi = 1.;
+        double eta = 0.;
+*/       
         /* calculate mappings */
-        s_F_o_xi = elem.F_o_xi(xi, eta);
+/*        s_F_o_xi = elem.F_o_xi(xi, eta);
         s_N = elem.N(xi, eta);
-        
+ */       
         /* TODO: fix heuristic, slice by "edge number" */
-        s_Nt = s_N.cols(0,3).t();
+//        s_Nt = s_N.cols(0,3).t();
         
         /* assemble P_ext */
-        vec::fixed<4> p_e;
+/*        vec::fixed<4> p_e;
         array<shared_ptr<Node2D>,2> nodes;
         tie(p_e, nodes) = elem.P_ext_from_traction
                     (tau, 1, s_F_o_xi, s_Nt);
@@ -139,7 +139,8 @@ int main(int argc, char* argv[])
                     weight*p_e(2*i+j);
         }
     }
-    
+*/
+        P_o << 0 << 0 << 1000 << 500 << 1000 << 500 << 0 << 0; 
     ofile << " ... done" << endl;
     ofile << "P_o = " << endl << P_o << endl;
     
@@ -186,7 +187,7 @@ int main(int argc, char* argv[])
                         /* compute second PK stress tensor */
                         mat I(2,2);
                         I.eye();
-                        mat E_green = s_F * trans(s_F) - I;
+                        mat E_green = trans(s_F) * s_F - I;
                         vec Ev_green(3);
                         Ev_green << E_green(0,0) << E_green(1,1) << E_green(1,0);
                         vec S = C_SE * Ev_green;
@@ -249,7 +250,8 @@ int main(int argc, char* argv[])
             u += delta_u;
             
             ofile << "A = " << endl << A << endl
-                 << "delta_u = " << endl << delta_u << endl;
+                  << "delta_u = " << endl << delta_u << endl
+                  << "u = " << endl << u << endl;
             
             /* compute error */
             if (iter == 1)

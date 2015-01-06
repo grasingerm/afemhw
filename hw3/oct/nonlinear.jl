@@ -1,3 +1,5 @@
+require("debug.jl");
+
 # TODO: make sure res and jac return same type
 # TODO: make init_guess type more general
 
@@ -15,8 +17,8 @@ function newton_raphson(res::Function, jac::Function, fin::Function,
   init_guess::Array, max_iters::Integer, eps::FloatingPoint, 
   alpha::FloatingPoint=1.0)
 
-  assert(max_iters > 0, "Maximum number of iterations should be positive.");
-  assert(eps >= 0, "Error tolerance must be greater than or equal to zero.");
+  @assert(max_iters > 0, "Maximum number of iterations should be positive.");
+  @assert(eps >= 0, "Error tolerance must be greater than or equal to zero.");
 
   u = init_guess;
   k = 1;

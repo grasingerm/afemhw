@@ -1,3 +1,5 @@
+require("debug.jl");
+
 #! Tanget stiffness moduli for plan strain condition using Kirchoff material
 #! constitutive model
 #!

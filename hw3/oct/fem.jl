@@ -1,3 +1,4 @@
+#! macros for shape functions and first derivative of shape functions
 @N1_Q4(xi, eta) ((1-(xi))*(1-(eta))/4.)
 @N2_Q4(xi, eta) ((1+(xi))*(1-(eta))/4.)
 @N3_Q4(xi, eta) ((1+(xi))*(1+(eta))/4.)
@@ -34,19 +35,46 @@ function ref_glob_to_par(N::Array{Float64,2}, X::Array{Float64,2})
   return N*X;
 end
 
-#! Deformation gradient to map parent spatial coords to deformed spatial coords
+#! \macro Gradient of shape functions, used to compute gradients
 #!
 #! \param xi Parent coordinate in x-direction
 #! \param eta Parent coordinate in y-direction
-#! \param x Two dimensional matrix of deformed, spatial, nodal coordinates
-#! \return Deformation gradient
-function defgrad_par_to_deformed(xi::Real, eta::Real, x::Array{Float64,2})
-  dN_dxi = Float64[
+#! \return Gradient of shape functions
+@dN_dxi(xi, eta) begin
+  Float64[
     dN1_dxi(eta) dN2_dxi(eta) dN3_dxi(eta) dN4_dxi(eta);
     dN1_deta(xi) dN2_deta(xi) dN3_deta(xi) dN4_deta(xi);
     ];
+end
 
-  F_t = dN_dxi * x;
+
+# TODO: write xT * dN_dxi to eliminate extra transpose operation
+
+#! Deformation gradient to map parent coords to deformed coords
+#!
+#! \param xi Parent coordinate in x-direction
+#! \param eta Parent coordinate in y-direction
+#! \param x Two dimensional matrix of global nodal coordinates
+#! \return Deformation gradient
+function defgrad_par_to_deformed(xi::Real, eta::Real, x::Array{Float64,2})
+  F_t = dN_dxi(xi, eta) * x;
   return F_t';
 end
 
+#! Gradient of deformation with respect to referential coordinates
+#!
+#! \param xi Parent coordinate in x-direction
+#! \param eta Parent coordinate in y-direction
+#! \param u Current deformation in table notation
+#! \return Gradient of deformation
+function grad_u(xi::Real, eta::Real, u::Array{Float64,2})
+  return dN_dxi(xi, eta) * u;
+end
+
+#! \macro Gradient of deformation with respect to referential coordinates
+#!
+#! \param xi Parent coordinate in x-direction
+#! \param eta Parent coordinate in y-direction
+#! \param u Current deformation in table notation
+#! \return Deformation gradient
+@defgrad(xi, eta, u) (grad_u(xi, eta, u) + eye(2))

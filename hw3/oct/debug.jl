@@ -6,7 +6,7 @@ end
 macro dassert(ex, msg)
   return quote
     if !(@ndebug)
-      @assert(ex, msg);
+      @assert($ex, $msg);
     end
   end
 end
